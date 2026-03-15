@@ -1,10 +1,4 @@
 #!/bin/bash
-# ============================================================
-#  ANIMATOR V2 — vast.ai on_start.sh
-#  Этот скрипт запускается АВТОМАТИЧЕСКИ при старте инстанса
-#  Вставить в поле "On-start script" при создании шаблона
-# ============================================================
-
 LOG_FILE="/workspace/animator_setup.log"
 GITHUB_RAW="https://raw.githubusercontent.com/PURRPLEEE/PurpleWork/main/animator-v2"
 COMFYUI_DIR="/workspace/ComfyUI"
@@ -17,7 +11,6 @@ echo "=============================================="
 echo " ANIMATOR V2 — Auto Setup [$(date)]"
 echo "=============================================="
 
-# Ждём пока ComfyUI директория появится
 echo "[WAIT] Ждём /workspace/ComfyUI..."
 for i in $(seq 1 30); do
     if [ -d "$COMFYUI_DIR" ]; then
@@ -27,7 +20,6 @@ for i in $(seq 1 30); do
     sleep 5
 done
 
-# Скачиваем ZIP с custom nodes
 GITHUB_ZIP_URL="https://github.com/PURRPLEEE/PurpleWork/releases/latest/download/custom_nodes.zip"
 TMP_ZIP="/tmp/custom_nodes.zip"
 TMP_EXTRACT="/tmp/custom_nodes_extracted"
@@ -43,12 +35,19 @@ echo "[OK] Распаковано"
 
 echo "[3/6] Копируем в custom_nodes..."
 mkdir -p "$CUSTOM_NODES_DIR"
-INNER=$(ls "$TMP_EXTRACT")
-COUNT=$(echo "$INNER" | wc -l)
-if [ "$COUNT" -eq 1 ] && [ -d "$TMP_EXTRACT/$INNER" ]; then
-    cp -r "$TMP_EXTRACT/$INNER"/. "$CUSTOM_NODES_DIR/"
+if [ -d "$TMP_EXTRACT/nodes" ]; then
+    cp -r "$TMP_EXTRACT/nodes"/. "$CUSTOM_NODES_DIR/"
+elif [ -d "$TMP_EXTRACT/custom_nodes" ]; then
+    cp -r "$TMP_EXTRACT/custom_nodes"/. "$CUSTOM_NODES_DIR/"
 else
-    cp -r "$TMP_EXTRACT"/. "$CUSTOM_NODES_DIR/"
+    INNER=$(ls "$TMP_EXTRACT" | head -1)
+    if [ -d "$TMP_EXTRACT/$INNER/nodes" ]; then
+        cp -r "$TMP_EXTRACT/$INNER/nodes"/. "$CUSTOM_NODES_DIR/"
+    elif [ -d "$TMP_EXTRACT/$INNER" ]; then
+        cp -r "$TMP_EXTRACT/$INNER"/. "$CUSTOM_NODES_DIR/"
+    else
+        cp -r "$TMP_EXTRACT"/. "$CUSTOM_NODES_DIR/"
+    fi
 fi
 echo "[OK] Скопировано"
 rm -rf "$TMP_ZIP" "$TMP_EXTRACT"
@@ -67,12 +66,11 @@ for d in "$CUSTOM_NODES_DIR"/*/; do
 done
 echo "[OK] Все зависимости установлены"
 
-# Скачиваем workflow JSON в папку ComfyUI
 echo "[6/6] Скачиваем workflow..."
 mkdir -p "$COMFYUI_DIR/user/default/workflows"
 wget -q "$GITHUB_RAW/workflow/animator_v2_workflow.json" \
     -O "$COMFYUI_DIR/user/default/workflows/animator_v2_workflow.json" && \
-    echo "[OK] Workflow сохранён" || echo "[WARN] Workflow не скачан (не критично)"
+    echo "[OK] Workflow сохранён" || echo "[WARN] Workflow не скачан"
 
 echo "[RESTART] Перезапускаем ComfyUI..."
 supervisorctl restart comfyui
