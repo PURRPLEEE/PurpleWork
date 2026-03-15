@@ -1,0 +1,628 @@
+{
+  "8": {
+    "inputs": {
+      "model": "Wan21_Uni3C_controlnet_fp16.safetensors",
+      "base_precision": "fp16",
+      "quantization": "fp8_e4m3fn",
+      "load_device": "main_device",
+      "attention_mode": "sdpa"
+    },
+    "class_type": "WanVideoUni3C_ControlnetLoader",
+    "_meta": {
+      "title": "ANIMATOR STABILITY"
+    }
+  },
+  "19": {
+    "inputs": {
+      "enable_vae_tiling": false,
+      "tile_x": 272,
+      "tile_y": 272,
+      "tile_stride_x": 144,
+      "tile_stride_y": 128,
+      "noise_aug_strength": 0,
+      "latent_strength": 1,
+      "vae": [
+        "29",
+        0
+      ],
+      "image": [
+        "71",
+        0
+      ]
+    },
+    "class_type": "WanVideoEncode",
+    "_meta": {
+      "title": "ANIMATOR STABILITY"
+    }
+  },
+  "21": {
+    "inputs": {
+      "strength": 1,
+      "start_percent": 0,
+      "end_percent": 1,
+      "offload": true,
+      "controlnet": [
+        "8",
+        0
+      ],
+      "render_latent": [
+        "19",
+        0
+      ]
+    },
+    "class_type": "WanVideoUni3C_embeds",
+    "_meta": {
+      "title": "ANIMATOR STABILITY"
+    }
+  },
+  "28": {
+    "inputs": {
+      "model": "WanModel.safetensors",
+      "base_precision": "fp16",
+      "quantization": "fp8_e4m3fn",
+      "load_device": "offload_device",
+      "attention_mode": "sdpa",
+      "rms_norm_function": "default"
+    },
+    "class_type": "WanVideoModelLoader",
+    "_meta": {
+      "title": "LOADER"
+    }
+  },
+  "29": {
+    "inputs": {
+      "model_name": "vae.safetensors",
+      "precision": "fp16",
+      "use_cpu_cache": false,
+      "verbose": false
+    },
+    "class_type": "WanVideoVAELoader",
+    "_meta": {
+      "title": "LOADER"
+    }
+  },
+  "30": {
+    "inputs": {
+      "clip_name": "klip_vision.safetensors"
+    },
+    "class_type": "CLIPVisionLoader",
+    "_meta": {
+      "title": "LOADER"
+    }
+  },
+  "32": {
+    "inputs": {
+      "lora_0": "light.safetensors",
+      "strength_0": 1,
+      "lora_1": "wan.reworked.safetensors",
+      "strength_1": 0.3,
+      "lora_2": "WanPusa.safetensors",
+      "strength_2": 0.9,
+      "lora_3": "WanFun.reworked.safetensors",
+      "strength_3": 0.5,
+      "lora_4": "none",
+      "strength_4": 0,
+      "low_mem_load": false,
+      "merge_loras": false
+    },
+    "class_type": "WanVideoLoraSelectMulti",
+    "_meta": {
+      "title": "LOADER"
+    }
+  },
+  "33": {
+    "inputs": {
+      "model": [
+        "28",
+        0
+      ],
+      "lora": [
+        "32",
+        0
+      ]
+    },
+    "class_type": "WanVideoSetLoRAs",
+    "_meta": {
+      "title": "LOADER"
+    }
+  },
+  "34": {
+    "inputs": {
+      "clip_name": "text_enc.safetensors",
+      "type": "wan",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "LOADER"
+    }
+  },
+  "46": {
+    "inputs": {
+      "image": [
+        "71",
+        0
+      ]
+    },
+    "class_type": "GetImageSizeAndCount",
+    "_meta": {
+      "title": "SET"
+    }
+  },
+  "49": {
+    "inputs": {
+      "positive": [
+        "69",
+        0
+      ],
+      "negative": [
+        "68",
+        0
+      ]
+    },
+    "class_type": "WanVideoTextEmbedBridge",
+    "_meta": {
+      "title": "SET"
+    }
+  },
+  "51": {
+    "inputs": {
+      "width": [
+        "46",
+        1
+      ],
+      "height": [
+        "46",
+        2
+      ],
+      "retarget_padding": 16,
+      "body_stick_width": -1,
+      "hand_stick_width": -1,
+      "draw_head": "True",
+      "pose_data": [
+        "66",
+        0
+      ]
+    },
+    "class_type": "DrawViTPose",
+    "_meta": {
+      "title": "SET"
+    }
+  },
+  "62": {
+    "inputs": {
+      "width": [
+        "46",
+        1
+      ],
+      "height": [
+        "46",
+        2
+      ],
+      "num_frames": [
+        "71",
+        1
+      ],
+      "force_offload": false,
+      "frame_window_size": 81,
+      "colormatch": "disabled",
+      "pose_strength": 0.7,
+      "face_strength": 0.6,
+      "tiled_vae": false,
+      "vae": [
+        "29",
+        0
+      ],
+      "clip_embeds": [
+        "64",
+        0
+      ],
+      "ref_images": [
+        "65",
+        0
+      ],
+      "face_images": [
+        "66",
+        1
+      ]
+    },
+    "class_type": "WanVideoAnimateEmbeds",
+    "_meta": {
+      "title": "L30"
+    }
+  },
+  "63": {
+    "inputs": {
+      "smooth_factor": true,
+      "pose_data": [
+        "66",
+        0
+      ]
+    },
+    "class_type": "TSPoseDataSmoother",
+    "_meta": {
+      "title": "SKELETON"
+    }
+  },
+  "64": {
+    "inputs": {
+      "strength_1": 1,
+      "strength_2": 1,
+      "crop": "center",
+      "combine_embeds": "average",
+      "force_offload": true,
+      "tiles": 0,
+      "ratio": 0.5,
+      "clip_vision": [
+        "30",
+        0
+      ],
+      "image_1": [
+        "65",
+        0
+      ]
+    },
+    "class_type": "WanVideoClipVisionEncode",
+    "_meta": {
+      "title": "CLIP"
+    }
+  },
+  "65": {
+    "inputs": {
+      "width": [
+        "46",
+        1
+      ],
+      "height": [
+        "46",
+        2
+      ],
+      "upscale_method": "lanczos",
+      "keep_proportion": "crop",
+      "pad_color": "0, 0, 0",
+      "crop_position": "center",
+      "divisible_by": 16,
+      "device": "cpu",
+      "image": [
+        "70",
+        0
+      ]
+    },
+    "class_type": "ImageResizeKJv2",
+    "_meta": {
+      "title": "IMAGE"
+    }
+  },
+  "66": {
+    "inputs": {
+      "width": [
+        "46",
+        1
+      ],
+      "height": [
+        "46",
+        2
+      ],
+      "face_padding": 0,
+      "model": [
+        "67",
+        0
+      ],
+      "images": [
+        "71",
+        0
+      ]
+    },
+    "class_type": "PoseAndFaceDetection",
+    "_meta": {
+      "title": "L20"
+    }
+  },
+  "67": {
+    "inputs": {
+      "vitpose_model": "vitpose_h_wholebody_model.onnx",
+      "yolo_model": "yolov10m.onnx",
+      "onnx_device": "CUDAExecutionProvider"
+    },
+    "class_type": "OnnxDetectionModelLoader",
+    "_meta": {
+      "title": "MODEL"
+    }
+  },
+  "68": {
+    "inputs": {
+      "text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+      "clip": [
+        "34",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "NEGATIVE PROMPT"
+    }
+  },
+  "69": {
+    "inputs": {
+      "text": "woman dancing, static locked-off shot. Girl Has blond hair",
+      "clip": [
+        "34",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "POSITIVE PROMPT"
+    }
+  },
+  "70": {
+    "inputs": {
+      "image": "freepik__-__23625.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Загрузить изображение"
+    }
+  },
+  "71": {
+    "inputs": {
+      "video": "9.mp4",
+      "force_rate": 30,
+      "custom_width": 720,
+      "custom_height": 1280,
+      "frame_load_cap": 0,
+      "skip_first_frames": 80,
+      "select_every_nth": 1,
+      "format": "Wan"
+    },
+    "class_type": "VHS_LoadVideo",
+    "_meta": {
+      "title": "Load Video (Upload) 🎥🅥🅗🅢"
+    }
+  },
+  "73": {
+    "inputs": {},
+    "class_type": "FancyTimerNode",
+    "_meta": {
+      "title": "Execution Timer"
+    }
+  },
+  "79": {
+    "inputs": {
+      "lora_0": "light.safetensors",
+      "strength_0": 1,
+      "lora_1": "wan.reworked.safetensors",
+      "strength_1": 0.3,
+      "lora_2": "WanPusa.safetensors",
+      "strength_2": 0.9,
+      "lora_3": "WanFun.reworked.safetensors",
+      "strength_3": 0.5,
+      "lora_4": "none",
+      "strength_4": 0,
+      "low_mem_load": false,
+      "merge_loras": false
+    },
+    "class_type": "WanVideoLoraSelectMulti",
+    "_meta": {
+      "title": "LOADER"
+    }
+  },
+  "80": {
+    "inputs": {
+      "lora": [
+        "79",
+        0
+      ]
+    },
+    "class_type": "WanVideoSetLoRAs",
+    "_meta": {
+      "title": "LOADER"
+    }
+  },
+  "81": {
+    "inputs": {
+      "clip_name": "text_enc.safetensors",
+      "type": "wan",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "LOADER"
+    }
+  },
+  "86": {
+    "inputs": {
+      "text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走"
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "NEGATIVE PROMPT"
+    }
+  },
+  "87": {
+    "inputs": {
+      "text": "woman dancing, static locked-off shot. Girl Has blond hair"
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "POSITIVE PROMPT"
+    }
+  },
+  "88": {
+    "inputs": {
+      "image": "freepik__-__23625.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Загрузить изображение"
+    }
+  },
+  "89": {
+    "inputs": {
+      "video": "9.mp4",
+      "force_rate": 30,
+      "custom_width": 720,
+      "custom_height": 1280,
+      "frame_load_cap": 0,
+      "skip_first_frames": 80,
+      "select_every_nth": 1,
+      "format": "Wan"
+    },
+    "class_type": "VHS_LoadVideo",
+    "_meta": {
+      "title": "Load Video (Upload) 🎥🅥🅗🅢"
+    }
+  },
+  "92": {
+    "inputs": {
+      "steps": 4,
+      "cfg": 1,
+      "shift": 5,
+      "seed": 25417796301106,
+      "force_offload": true,
+      "scheduler": "dpm++_sde",
+      "riflex_freq_index": 0,
+      "denoise_strength": 0.75,
+      "batched_cfg": "",
+      "rope_function": "comfy",
+      "start_step": 0,
+      "end_step": -1,
+      "add_noise_to_samples": false,
+      "model": [
+        "33",
+        0
+      ],
+      "image_embeds": [
+        "62",
+        0
+      ],
+      "text_embeds": [
+        "49",
+        0
+      ],
+      "uni3c_embeds": [
+        "21",
+        0
+      ]
+    },
+    "class_type": "WanVideoSampler",
+    "_meta": {
+      "title": "L40"
+    }
+  },
+  "93": {
+    "inputs": {
+      "enable_vae_tiling": false,
+      "tile_x": 272,
+      "tile_y": 272,
+      "tile_stride_x": 144,
+      "tile_stride_y": 120,
+      "normalization": "default",
+      "vae": [
+        "29",
+        0
+      ],
+      "samples": [
+        "92",
+        0
+      ]
+    },
+    "class_type": "WanVideoDecode",
+    "_meta": {
+      "title": "DC"
+    }
+  },
+  "94": {
+    "inputs": {
+      "width": 720,
+      "height": 1280,
+      "upscale_method": "lanczos",
+      "keep_proportion": "crop",
+      "pad_color": "0, 0, 0",
+      "crop_position": "center",
+      "divisible_by": 16,
+      "device": "cpu",
+      "image": [
+        "93",
+        0
+      ]
+    },
+    "class_type": "ImageResizeKJv2",
+    "_meta": {
+      "title": "IMAGE"
+    }
+  },
+  "95": {
+    "inputs": {
+      "chunk_size": 81
+    },
+    "class_type": "TSColorMatch",
+    "_meta": {
+      "title": "CHUNK"
+    }
+  },
+  "96": {
+    "inputs": {},
+    "class_type": "TSPreviewImageNoMetadata",
+    "_meta": {
+      "title": "IMAGE"
+    }
+  },
+  "97": {
+    "inputs": {},
+    "class_type": "TSPreviewImageNoMetadata",
+    "_meta": {
+      "title": "IMAGE"
+    }
+  },
+  "98": {
+    "inputs": {
+      "frame_rate": 30,
+      "loop_count": 0,
+      "filename_prefix": "POSE",
+      "format": "video/h264-mp4",
+      "pingpong": false,
+      "save_output": true
+    },
+    "class_type": "TSVideoCombineNoMetadata",
+    "_meta": {
+      "title": "VIDEO"
+    }
+  },
+  "100": {
+    "inputs": {
+      "frame_rate": 30,
+      "loop_count": 0,
+      "filename_prefix": "POSE",
+      "format": "video/h264-mp4",
+      "pingpong": false,
+      "save_output": true
+    },
+    "class_type": "TSVideoCombineNoMetadata",
+    "_meta": {
+      "title": "SAVE VIDEO"
+    }
+  },
+  "101": {
+    "inputs": {
+      "frame_rate": 30,
+      "loop_count": 0,
+      "filename_prefix": "POSE",
+      "format": "video/h264-mp4",
+      "pingpong": false,
+      "save_output": true,
+      "images": [
+        "94",
+        0
+      ],
+      "audio": [
+        "71",
+        2
+      ]
+    },
+    "class_type": "TSVideoCombineNoMetadata",
+    "_meta": {
+      "title": "VIDEO"
+    }
+  }
+}

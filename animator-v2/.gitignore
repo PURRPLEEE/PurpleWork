@@ -1,0 +1,12 @@
+*.safetensors
+*.pt
+*.ckpt
+*.bin
+*.mp4
+*.png
+*.jpg
+*.jpeg
+__pycache__/
+*.pyc
+.DS_Store
+*.log
