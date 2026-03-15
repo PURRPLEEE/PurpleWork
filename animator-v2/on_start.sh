@@ -6,7 +6,7 @@
 # ============================================================
 
 LOG_FILE="/workspace/animator_setup.log"
-GITHUB_RAW="https://raw.githubusercontent.com/YOUR_USERNAME/animator-v2/main"
+GITHUB_RAW="https://raw.githubusercontent.com/PURRPLEEE/PurpleWork/main/animator-v2"
 COMFYUI_DIR="/workspace/ComfyUI"
 CUSTOM_NODES_DIR="$COMFYUI_DIR/custom_nodes"
 
@@ -28,7 +28,7 @@ for i in $(seq 1 30); do
 done
 
 # Скачиваем ZIP с custom nodes
-GITHUB_ZIP_URL="https://github.com/YOUR_USERNAME/animator-v2/releases/latest/download/custom_nodes.zip"
+GITHUB_ZIP_URL="https://github.com/PURRPLEEE/PurpleWork/releases/latest/download/custom_nodes.zip"
 TMP_ZIP="/tmp/custom_nodes.zip"
 TMP_EXTRACT="/tmp/custom_nodes_extracted"
 
