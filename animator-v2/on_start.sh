@@ -53,21 +53,23 @@ fi
 echo "[OK] Скопировано"
 rm -rf "$TMP_ZIP" "$TMP_EXTRACT"
 
-echo "[4/6] pip install ComfyUI requirements..."
-pip install -q opencv-python imageio-ffmpeg
+echo "[4/6] pip install зависимости..."
+/venv/main/bin/pip install -q -r "$COMFYUI_DIR/requirements.txt"
+/venv/main/bin/pip install -q opencv-python imageio-ffmpeg
 echo "[OK] Done"
 
 echo "[5/6] pip install custom nodes requirements..."
 for d in "$CUSTOM_NODES_DIR"/*/; do
     if [ -f "$d/requirements.txt" ]; then
         echo "  → $(basename $d)"
-        pip install -q -r "$d/requirements.txt"
+        /venv/main/bin/pip install -q -r "$d/requirements.txt"
     fi
 done
 echo "[OK] Все зависимости установлены"
 
 # Скачиваем workflow JSON в папку ComfyUI
 echo "[6/6] Скачиваем workflow..."
+mkdir -p "$COMFYUI_DIR/user/default/workflows"
 wget -q "$GITHUB_RAW/workflow/animator_v2_workflow.json" \
     -O "$COMFYUI_DIR/user/default/workflows/animator_v2_workflow.json" && \
     echo "[OK] Workflow сохранён" || echo "[WARN] Workflow не скачан (не критично)"
