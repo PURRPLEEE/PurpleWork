@@ -74,6 +74,7 @@ wget -q "$GITHUB_RAW/workflow/animator_v2_workflow.json" \
 
 echo "[RESTART] Перезапускаем ComfyUI..."
 supervisorctl restart comfyui
+rm -f /.provisioning
 
 echo ""
 echo "=============================================="
