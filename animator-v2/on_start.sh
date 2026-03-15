@@ -54,7 +54,7 @@ echo "[OK] Скопировано"
 rm -rf "$TMP_ZIP" "$TMP_EXTRACT"
 
 echo "[4/6] pip install ComfyUI requirements..."
-pip install -q -r "$COMFYUI_DIR/requirements.txt"
+pip install -q opencv-python imageio-ffmpeg
 echo "[OK] Done"
 
 echo "[5/6] pip install custom nodes requirements..."
