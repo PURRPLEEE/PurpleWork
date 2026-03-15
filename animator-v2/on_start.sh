@@ -53,7 +53,7 @@ echo "[OK] Скопировано"
 rm -rf "$TMP_ZIP" "$TMP_EXTRACT"
 
 echo "[4/6] pip install зависимости..."
-/venv/main/bin/pip install -q -r "$COMFYUI_DIR/requirements.txt"
+[ -f "$COMFYUI_DIR/requirements.txt" ] && /venv/main/bin/pip install -q -r "$COMFYUI_DIR/requirements.txt" || true
 /venv/main/bin/pip install -q opencv-python imageio-ffmpeg
 echo "[OK] Done"
 
