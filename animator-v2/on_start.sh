@@ -28,7 +28,7 @@ if [ ! -d "$COMFYUI_DIR/custom_nodes" ]; then
     exit 1
 fi
 
-# Снимаем security restriction для Manager
+# Security settings
 echo "[SECURITY] Снимаем ограничения Manager..."
 mkdir -p "$COMFYUI_DIR/user/default"
 cat > "$COMFYUI_DIR/user/default/comfy.settings.json" << 'EOF'
@@ -39,27 +39,32 @@ cat > "$COMFYUI_DIR/user/default/comfy.settings.json" << 'EOF'
 EOF
 echo "[OK] Security level установлен"
 
-# Скачиваем и устанавливаем ноды
+# Скачиваем ноды
 echo "[1/5] Скачиваем custom_nodes.zip..."
-wget -q --show-progress "$GITHUB_ZIP_URL" -O "$TMP_ZIP" && echo "[OK] Скачан" || { echo "[ERROR] Не удалось скачать ZIP"; exit 1; }
+wget -q --show-progress "$GITHUB_ZIP_URL" -O "$TMP_ZIP"
+if [ $? -ne 0 ]; then
+    echo "[ERROR] Не удалось скачать ZIP"
+    exit 1
+fi
+echo "[OK] Скачан"
 
 echo "[2/5] Распаковываем..."
 rm -rf "$TMP_EXTRACT"
 mkdir -p "$TMP_EXTRACT"
 unzip -q "$TMP_ZIP" -d "$TMP_EXTRACT"
-echo "[OK] Распаковано"
-
 echo "[3/5] Копируем в custom_nodes..."
 mkdir -p "$CUSTOM_NODES_DIR"
+
+# Определяем структуру архива
 if [ -d "$TMP_EXTRACT/nodes" ]; then
     cp -r "$TMP_EXTRACT/nodes"/. "$CUSTOM_NODES_DIR/"
 elif [ -d "$TMP_EXTRACT/custom_nodes" ]; then
     cp -r "$TMP_EXTRACT/custom_nodes"/. "$CUSTOM_NODES_DIR/"
 else
     INNER=$(ls "$TMP_EXTRACT" | head -1)
-    if [ -d "$TMP_EXTRACT/$INNER/nodes" ]; then
+    if [ -n "$INNER" ] && [ -d "$TMP_EXTRACT/$INNER/nodes" ]; then
         cp -r "$TMP_EXTRACT/$INNER/nodes"/. "$CUSTOM_NODES_DIR/"
-    elif [ -d "$TMP_EXTRACT/$INNER" ]; then
+    elif [ -n "$INNER" ] && [ -d "$TMP_EXTRACT/$INNER" ]; then
         cp -r "$TMP_EXTRACT/$INNER"/. "$CUSTOM_NODES_DIR/"
     else
         cp -r "$TMP_EXTRACT"/. "$CUSTOM_NODES_DIR/"
@@ -82,10 +87,10 @@ echo "[5/5] Скачиваем workflow..."
 mkdir -p "$COMFYUI_DIR/user/default/workflows"
 wget -q "$GITHUB_RAW/workflow/animator_v2_workflow.json" \
     -O "$COMFYUI_DIR/user/default/workflows/animator_v2_workflow.json" && \
-    echo "[OK] Workflow сохранён" || echo "[WARN] Workflow не скачан"
+    echo "[OK] Workflow сохранён" || echo "[WARN] Workflow не скачан — загрузи вручную"
 
 echo "[RESTART] Перезапускаем ComfyUI..."
-supervisorctl restart comfyui 2>/dev/null || true
+supervisorctl restart comfui 2>/dev/null || true
 
 echo "=============================================="
 echo " ✅ ANIMATOR V2 готов! [$(date)]"
