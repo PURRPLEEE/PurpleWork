@@ -80,6 +80,17 @@ if [ ! -d "ComfyUI-KJNodes" ]; then
     echo "[OK] KJNodes"
 fi
 
+if [ ! -d "rgthree-comfy" ]; then
+    git clone -q https://github.com/rgthree/rgthree-comfy
+    echo "[OK] rgthree-comfy (Label, MarkdownNote и др.)"
+fi
+
+if [ ! -d "ComfyUI-SAM2" ]; then
+    git clone -q https://github.com/kijai/ComfyUI-SAM2
+    /venv/main/bin/pip install -q -r ComfyUI-SAM2/requirements.txt || true
+    echo "[OK] SAM2"
+fi
+
 # ============================================================
 # ШАГ 3: pip зависимости всех нод
 # ============================================================
