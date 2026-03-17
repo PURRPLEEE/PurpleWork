@@ -1,6 +1,3 @@
-tart · SH
-Copier
-
 #!/bin/bash
 # ============================================================
 #  ANIMATOR V2 — vast.ai on_start.sh — ФИНАЛЬНАЯ ВЕРСИЯ
@@ -118,21 +115,23 @@ echo "[OK] Зависимости установлены"
 # ============================================================
 echo "[5/6] Скачиваем модели..."
  
-# Хелпер — скачивает только если файл не существует или пустой
+# Хелпер — скачивает только если файл меньше 1MB (пустой/битый)
 dl() {
     local url="$1"
     local path="$2"
     local token="${3:-}"
+    mkdir -p "$(dirname $path)"
     if [ -f "$path" ] && [ "$(stat -c%s "$path")" -gt 1000000 ]; then
         echo "  [SKIP] $(basename $path)"
         return
     fi
     echo "  [DL] $(basename $path)..."
-    mkdir -p "$(dirname $path)"
     if [ -n "$token" ]; then
-        wget -q --show-progress --header="Authorization: Bearer $token" "$url" -O "$path" && echo "  [OK]" || echo "  [WARN] Ошибка скачивания"
+        wget -q --show-progress --header="Authorization: Bearer $token" "$url" -O "$path" \
+            && echo "  [OK]" || echo "  [WARN] Ошибка скачивания $(basename $path)"
     else
-        wget -q --show-progress "$url" -O "$path" && echo "  [OK]" || echo "  [WARN] Ошибка скачивания"
+        wget -q --show-progress "$url" -O "$path" \
+            && echo "  [OK]" || echo "  [WARN] Ошибка скачивания $(basename $path)"
     fi
 }
  
@@ -152,7 +151,7 @@ dl "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/spl
 dl "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/text_encoders/umt5_xxl_fp8_e4m3fn_scaled.safetensors" \
    "$COMFYUI_DIR/models/text_encoders/text_enc.safetensors" "$HF_TOKEN"
  
-# ControlNet (правильный URL — без /Uni3C/)
+# ControlNet — проверенный рабочий URL (1.9GB)
 dl "https://huggingface.co/Kijai/WanVideo_comfy/resolve/main/Wan21_Uni3C_controlnet_fp16.safetensors" \
    "$COMFYUI_DIR/models/controlnet/Wan21_Uni3C_controlnet_fp16.safetensors" "$HF_TOKEN"
  
@@ -165,17 +164,17 @@ dl "https://huggingface.co/Kijai/WanVideo_comfy/resolve/main/Pusa/Wan21_PusaV1_L
    "$COMFYUI_DIR/models/loras/WanPusa.safetensors" "$HF_TOKEN"
  
 # ============================================================
-# ONNX модели — кладём ТОЛЬКО в detection/ (правильный путь!)
-# Нода ComfyUI-WanAnimatePreprocess ищет именно там
+# ONNX — только в detection/ (именно туда смотрит WanAnimatePreprocess)
+# vitpose: Large модель 384x288 с JunkyByte (~1.2GB)
+# yolov10m: с GitHub (~59MB)
 # ============================================================
 mkdir -p "$COMFYUI_DIR/models/detection"
  
-# YOLOv10m — скачиваем с GitHub (не требует токена)
+# YOLOv10m — GitHub, без токена
 dl "https://github.com/THU-MIG/yolov10/releases/download/v1.1/yolov10m.onnx" \
    "$COMFYUI_DIR/models/detection/yolov10m.onnx"
  
-# ViTPose — скачиваем с JunkyByte (с токеном)
-# Размер ~128MB, формат Large (384x288 input — именно то что ожидает нода)
+# ViTPose Large wholebody — с токеном (~1.2GB, рабочий источник)
 dl "https://huggingface.co/JunkyByte/easy_ViTPose/resolve/main/onnx/wholebody/vitpose-l-wholebody.onnx" \
    "$COMFYUI_DIR/models/detection/vitpose_h_wholebody_model.onnx" "$HF_TOKEN"
  
