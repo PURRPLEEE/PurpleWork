@@ -1,3 +1,6 @@
+tart · SH
+Copier
+
 #!/bin/bash
 # ============================================================
 #  ANIMATOR V2 — vast.ai on_start.sh — ФИНАЛЬНАЯ ВЕРСИЯ
@@ -10,6 +13,7 @@ GITHUB_RAW="https://raw.githubusercontent.com/PURRPLEEE/PurpleWork/main/animator
 GITHUB_ZIP_URL="https://github.com/PURRPLEEE/PurpleWork/releases/latest/download/custom_nodes.zip"
 TMP_ZIP="/tmp/custom_nodes.zip"
 TMP_EXTRACT="/tmp/custom_nodes_extracted"
+HF_TOKEN="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"
  
 exec > >(tee -a "$LOG_FILE") 2>&1
  
@@ -114,101 +118,68 @@ echo "[OK] Зависимости установлены"
 # ============================================================
 echo "[5/6] Скачиваем модели..."
  
-# Основная модель WAN (16GB) — сохраняем сразу с нужным именем
-mkdir -p "$COMFYUI_DIR/models/diffusion_models"
-if [ ! -f "$COMFYUI_DIR/models/diffusion_models/WanModel.safetensors" ]; then
-    echo "  → WanModel (16GB)..."
-    wget -q --show-progress \
-        "https://huggingface.co/Kijai/WanVideo_comfy_fp8_scaled/resolve/main/Wan22Animate/Wan2_2-Animate-14B_fp8_scaled_e4m3fn_KJ_v2.safetensors" \
-        -O "$COMFYUI_DIR/models/diffusion_models/WanModel.safetensors"
-    echo "[OK] WanModel"
-fi
+# Хелпер — скачивает только если файл не существует или пустой
+dl() {
+    local url="$1"
+    local path="$2"
+    local token="${3:-}"
+    if [ -f "$path" ] && [ "$(stat -c%s "$path")" -gt 1000000 ]; then
+        echo "  [SKIP] $(basename $path)"
+        return
+    fi
+    echo "  [DL] $(basename $path)..."
+    mkdir -p "$(dirname $path)"
+    if [ -n "$token" ]; then
+        wget -q --show-progress --header="Authorization: Bearer $token" "$url" -O "$path" && echo "  [OK]" || echo "  [WARN] Ошибка скачивания"
+    else
+        wget -q --show-progress "$url" -O "$path" && echo "  [OK]" || echo "  [WARN] Ошибка скачивания"
+    fi
+}
+ 
+# Основная модель WAN (16GB)
+dl "https://huggingface.co/Kijai/WanVideo_comfy_fp8_scaled/resolve/main/Wan22Animate/Wan2_2-Animate-14B_fp8_scaled_e4m3fn_KJ_v2.safetensors" \
+   "$COMFYUI_DIR/models/diffusion_models/WanModel.safetensors" "$HF_TOKEN"
  
 # VAE
-mkdir -p "$COMFYUI_DIR/models/vae"
-if [ ! -f "$COMFYUI_DIR/models/vae/vae.safetensors" ]; then
-    echo "  → VAE..."
-    wget -q --show-progress \
-        "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/vae/wan_2.1_vae.safetensors" \
-        -O "$COMFYUI_DIR/models/vae/vae.safetensors"
-    echo "[OK] VAE"
-fi
+dl "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/vae/wan_2.1_vae.safetensors" \
+   "$COMFYUI_DIR/models/vae/vae.safetensors" "$HF_TOKEN"
  
 # CLIP Vision
-mkdir -p "$COMFYUI_DIR/models/clip_vision"
-if [ ! -f "$COMFYUI_DIR/models/clip_vision/klip_vision.safetensors" ]; then
-    echo "  → CLIP Vision..."
-    wget -q --show-progress \
-        "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/clip_vision/clip_vision_h.safetensors" \
-        -O "$COMFYUI_DIR/models/clip_vision/klip_vision.safetensors"
-    echo "[OK] CLIP Vision"
-fi
+dl "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/clip_vision/clip_vision_h.safetensors" \
+   "$COMFYUI_DIR/models/clip_vision/klip_vision.safetensors" "$HF_TOKEN"
  
 # Text Encoder
-mkdir -p "$COMFYUI_DIR/models/text_encoders"
-if [ ! -f "$COMFYUI_DIR/models/text_encoders/text_enc.safetensors" ]; then
-    echo "  → Text Encoder..."
-    wget -q --show-progress \
-        "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/text_encoders/umt5_xxl_fp8_e4m3fn_scaled.safetensors" \
-        -O "$COMFYUI_DIR/models/text_encoders/text_enc.safetensors"
-    echo "[OK] Text Encoder"
-fi
+dl "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/text_encoders/umt5_xxl_fp8_e4m3fn_scaled.safetensors" \
+   "$COMFYUI_DIR/models/text_encoders/text_enc.safetensors" "$HF_TOKEN"
  
-# ControlNet
-mkdir -p "$COMFYUI_DIR/models/controlnet"
-if [ ! -f "$COMFYUI_DIR/models/controlnet/Wan21_Uni3C_controlnet_fp16.safetensors" ]; then
-    echo "  → ControlNet Uni3C..."
-    wget -q --show-progress \
-        "https://huggingface.co/Kijai/WanVideo_comfy/resolve/main/Uni3C/Wan21_Uni3C_controlnet_fp16.safetensors" \
-        -O "$COMFYUI_DIR/models/controlnet/Wan21_Uni3C_controlnet_fp16.safetensors"
-    echo "[OK] ControlNet"
-fi
+# ControlNet (правильный URL — без /Uni3C/)
+dl "https://huggingface.co/Kijai/WanVideo_comfy/resolve/main/Wan21_Uni3C_controlnet_fp16.safetensors" \
+   "$COMFYUI_DIR/models/controlnet/Wan21_Uni3C_controlnet_fp16.safetensors" "$HF_TOKEN"
  
 # LoRA: light
-mkdir -p "$COMFYUI_DIR/models/loras"
-if [ ! -f "$COMFYUI_DIR/models/loras/light.safetensors" ]; then
-    echo "  → LoRA: light..."
-    wget -q --show-progress \
-        "https://huggingface.co/Kijai/WanVideo_comfy/resolve/main/Lightx2v/lightx2v_I2V_14B_480p_cfg_step_distill_rank256_bf16.safetensors" \
-        -O "$COMFYUI_DIR/models/loras/light.safetensors"
-    echo "[OK] LoRA light"
-fi
+dl "https://huggingface.co/Kijai/WanVideo_comfy/resolve/main/Lightx2v/lightx2v_I2V_14B_480p_cfg_step_distill_rank256_bf16.safetensors" \
+   "$COMFYUI_DIR/models/loras/light.safetensors" "$HF_TOKEN"
  
 # LoRA: WanPusa
-if [ ! -f "$COMFYUI_DIR/models/loras/WanPusa.safetensors" ]; then
-    echo "  → LoRA: WanPusa..."
-    wget -q --show-progress \
-        "https://huggingface.co/Kijai/WanVideo_comfy/resolve/main/Pusa/Wan21_PusaV1_LoRA_14B_rank512_bf16.safetensors" \
-        -O "$COMFYUI_DIR/models/loras/WanPusa.safetensors"
-    echo "[OK] LoRA WanPusa"
-fi
+dl "https://huggingface.co/Kijai/WanVideo_comfy/resolve/main/Pusa/Wan21_PusaV1_LoRA_14B_rank512_bf16.safetensors" \
+   "$COMFYUI_DIR/models/loras/WanPusa.safetensors" "$HF_TOKEN"
  
-# ONNX модели — кладём в onnx И копируем куда нужно нодам
-mkdir -p "$COMFYUI_DIR/models/onnx"
-mkdir -p "$COMFYUI_DIR/models/ultralytics/bbox"
-mkdir -p "$COMFYUI_DIR/models/pose/animal"
+# ============================================================
+# ONNX модели — кладём ТОЛЬКО в detection/ (правильный путь!)
+# Нода ComfyUI-WanAnimatePreprocess ищет именно там
+# ============================================================
+mkdir -p "$COMFYUI_DIR/models/detection"
  
-if [ ! -f "$COMFYUI_DIR/models/onnx/yolov10m.onnx" ]; then
-    echo "  → YOLOv10m..."
-    wget -q --show-progress \
-        "https://huggingface.co/Kijai/vitpose_comfy/resolve/main/onnx/yolov10m.onnx" \
-        -O "$COMFYUI_DIR/models/onnx/yolov10m.onnx"
-    echo "[OK] yolov10m"
-fi
-# Копируем в ultralytics/bbox (куда ищет нода)
-cp -f "$COMFYUI_DIR/models/onnx/yolov10m.onnx" "$COMFYUI_DIR/models/ultralytics/bbox/yolov10m.onnx"
+# YOLOv10m — скачиваем с GitHub (не требует токена)
+dl "https://github.com/THU-MIG/yolov10/releases/download/v1.1/yolov10m.onnx" \
+   "$COMFYUI_DIR/models/detection/yolov10m.onnx"
  
-if [ ! -f "$COMFYUI_DIR/models/onnx/vitpose_h_wholebody_model.onnx" ]; then
-    echo "  → ViTPose..."
-    wget -q --show-progress \
-        "https://huggingface.co/Kijai/vitpose_comfy/resolve/main/onnx/vitpose_h_wholebody_model.onnx" \
-        -O "$COMFYUI_DIR/models/onnx/vitpose_h_wholebody_model.onnx"
-    echo "[OK] vitpose"
-fi
-# Копируем в pose/animal (куда ищет нода)
-cp -f "$COMFYUI_DIR/models/onnx/vitpose_h_wholebody_model.onnx" "$COMFYUI_DIR/models/pose/animal/vitpose_h_wholebody_model.onnx"
+# ViTPose — скачиваем с JunkyByte (с токеном)
+# Размер ~128MB, формат Large (384x288 input — именно то что ожидает нода)
+dl "https://huggingface.co/JunkyByte/easy_ViTPose/resolve/main/onnx/wholebody/vitpose-l-wholebody.onnx" \
+   "$COMFYUI_DIR/models/detection/vitpose_h_wholebody_model.onnx" "$HF_TOKEN"
  
-echo "[OK] Все модели скачаны и разложены по папкам"
+echo "[OK] Все модели скачаны"
  
 # ============================================================
 # ШАГ 6: Workflow
@@ -232,3 +203,4 @@ echo "=============================================="
 echo " ✅ ANIMATOR V2 готов! [$(date)]"
 echo " Лог: $LOG_FILE"
 echo "=============================================="
+ 
