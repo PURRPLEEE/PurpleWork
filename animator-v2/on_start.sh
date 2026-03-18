@@ -49,7 +49,7 @@ echo "[OK] Security level = weak"
 # ШАГ 2: Custom Nodes из ZIP
 # ============================================================
 echo "[1/6] Скачиваем custom_nodes.zip..."
-wget -q --show-progress "$GITHUB_ZIP_URL" -O "$TMP_ZIP" && echo "[OK] Скачан" || { echo "[ERROR] ZIP не скачан"; exit 1; }
+wget --show-progress "$GITHUB_ZIP_URL" -O "$TMP_ZIP" && echo "[OK] Скачан" || { echo "[ERROR] ZIP не скачан"; exit 1; }
  
 echo "[2/6] Распаковываем и копируем ноды..."
 rm -rf "$TMP_EXTRACT"
@@ -112,82 +112,85 @@ echo "[OK] Зависимости установлены"
  
 # ============================================================
 # ШАГ 5: Скачиваем ВСЕ модели
+# ВАЖНО: без -q чтобы файлы не были повреждены!
+# Проверяем размер — если < 1MB значит битый, перекачиваем
 # ============================================================
 echo "[5/6] Скачиваем модели..."
  
-# Хелпер — скачивает только если файл меньше 1MB (пустой/битый)
 dl() {
     local url="$1"
     local path="$2"
-    local token="${3:-}"
     mkdir -p "$(dirname $path)"
-    if [ -f "$path" ] && [ "$(stat -c%s "$path")" -gt 1000000 ]; then
+    # Пропускаем только если файл больше 1MB (не битый)
+    if [ -f "$path" ] && [ "$(stat -c%s "$path" 2>/dev/null || echo 0)" -gt 1000000 ]; then
         echo "  [SKIP] $(basename $path)"
         return
     fi
     echo "  [DL] $(basename $path)..."
-    if [ -n "$token" ]; then
-        wget -q --show-progress --header="Authorization: Bearer $token" "$url" -O "$path" \
-            && echo "  [OK]" || echo "  [WARN] Ошибка скачивания $(basename $path)"
-    else
-        wget -q --show-progress "$url" -O "$path" \
-            && echo "  [OK]" || echo "  [WARN] Ошибка скачивания $(basename $path)"
-    fi
+    wget --show-progress \
+        --header="Authorization: Bearer $HF_TOKEN" \
+        "$url" -O "$path" \
+        && echo "  [OK] $(basename $path)" \
+        || echo "  [ERR] $(basename $path)"
 }
  
 # Основная модель WAN (16GB)
 dl "https://huggingface.co/Kijai/WanVideo_comfy_fp8_scaled/resolve/main/Wan22Animate/Wan2_2-Animate-14B_fp8_scaled_e4m3fn_KJ_v2.safetensors" \
-   "$COMFYUI_DIR/models/diffusion_models/WanModel.safetensors" "$HF_TOKEN"
+   "$COMFYUI_DIR/models/diffusion_models/WanModel.safetensors"
  
-# VAE
+# VAE (242MB)
 dl "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/vae/wan_2.1_vae.safetensors" \
-   "$COMFYUI_DIR/models/vae/vae.safetensors" "$HF_TOKEN"
+   "$COMFYUI_DIR/models/vae/vae.safetensors"
  
-# CLIP Vision
+# CLIP Vision (1.1GB)
 dl "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/clip_vision/clip_vision_h.safetensors" \
-   "$COMFYUI_DIR/models/clip_vision/klip_vision.safetensors" "$HF_TOKEN"
+   "$COMFYUI_DIR/models/clip_vision/klip_vision.safetensors"
  
-# Text Encoder
+# Text Encoder (4GB)
 dl "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/text_encoders/umt5_xxl_fp8_e4m3fn_scaled.safetensors" \
-   "$COMFYUI_DIR/models/text_encoders/text_enc.safetensors" "$HF_TOKEN"
+   "$COMFYUI_DIR/models/text_encoders/text_enc.safetensors"
  
-# ControlNet — проверенный рабочий URL (1.9GB)
+# ControlNet (1.9GB) — РАБОЧИЙ URL (без /Uni3C/)
 dl "https://huggingface.co/Kijai/WanVideo_comfy/resolve/main/Wan21_Uni3C_controlnet_fp16.safetensors" \
-   "$COMFYUI_DIR/models/controlnet/Wan21_Uni3C_controlnet_fp16.safetensors" "$HF_TOKEN"
+   "$COMFYUI_DIR/models/controlnet/Wan21_Uni3C_controlnet_fp16.safetensors"
  
 # LoRA: light
 dl "https://huggingface.co/Kijai/WanVideo_comfy/resolve/main/Lightx2v/lightx2v_I2V_14B_480p_cfg_step_distill_rank256_bf16.safetensors" \
-   "$COMFYUI_DIR/models/loras/light.safetensors" "$HF_TOKEN"
+   "$COMFYUI_DIR/models/loras/light.safetensors"
  
 # LoRA: WanPusa
 dl "https://huggingface.co/Kijai/WanVideo_comfy/resolve/main/Pusa/Wan21_PusaV1_LoRA_14B_rank512_bf16.safetensors" \
-   "$COMFYUI_DIR/models/loras/WanPusa.safetensors" "$HF_TOKEN"
+   "$COMFYUI_DIR/models/loras/WanPusa.safetensors"
  
 # ============================================================
-# ONNX — только в detection/ (именно туда смотрит WanAnimatePreprocess)
-# vitpose: Large модель 384x288 с JunkyByte (~1.2GB)
-# yolov10m: с GitHub (~59MB)
+# ONNX — папка DETECTION (именно туда смотрит OnnxDetectionModelLoader)
 # ============================================================
 mkdir -p "$COMFYUI_DIR/models/detection"
  
-# YOLOv10m — GitHub, без токена
-dl "https://github.com/THU-MIG/yolov10/releases/download/v1.1/yolov10m.onnx" \
+# YOLOv10m (59MB)
+dl "https://huggingface.co/Kijai/vitpose_comfy/resolve/main/onnx/yolov10m.onnx" \
    "$COMFYUI_DIR/models/detection/yolov10m.onnx"
  
-# ViTPose Large wholebody — с токеном (~1.2GB, рабочий источник)
-dl "https://huggingface.co/JunkyByte/easy_ViTPose/resolve/main/onnx/wholebody/vitpose-l-wholebody.onnx" \
-   "$COMFYUI_DIR/models/detection/vitpose_h_wholebody_model.onnx" "$HF_TOKEN"
+# ViTPose wholebody model (~400KB)
+dl "https://huggingface.co/Kijai/vitpose_comfy/resolve/main/onnx/vitpose_h_wholebody_model.onnx" \
+   "$COMFYUI_DIR/models/detection/vitpose_h_wholebody_model.onnx"
  
-echo "[OK] Все модели скачаны"
+# ViTPose wholebody data.bin (ОБЯЗАТЕЛЬНЫЙ файл!)
+dl "https://huggingface.co/Kijai/vitpose_comfy/resolve/main/onnx/vitpose_h_wholebody_data.bin" \
+   "$COMFYUI_DIR/models/detection/vitpose_h_wholebody_data.bin"
+ 
+echo "[OK] Все модели готовы"
  
 # ============================================================
-# ШАГ 6: Workflow
+# ШАГ 6: Workflow с дизайном (без SAM2/SimpleKnob нод)
 # ============================================================
 echo "[6/6] Скачиваем workflow..."
 mkdir -p "$COMFYUI_DIR/user/default/workflows"
-wget -q "$GITHUB_RAW/workflow/animator_v2_workflow.json" \
-    -O "$COMFYUI_DIR/user/default/workflows/animator_v2_workflow.json" && \
-    echo "[OK] Workflow сохранён" || echo "[WARN] Workflow не скачан"
+wget --show-progress \
+    "$GITHUB_RAW/workflow/animator_v2_workflow.json" \
+    -O "$COMFYUI_DIR/user/default/workflows/animator_v2_workflow.json" \
+    && echo "[OK] Workflow сохранён" \
+    || echo "[WARN] Workflow не скачан"
  
 # ============================================================
 # Перезапуск ComfyUI
@@ -202,4 +205,3 @@ echo "=============================================="
 echo " ✅ ANIMATOR V2 готов! [$(date)]"
 echo " Лог: $LOG_FILE"
 echo "=============================================="
- 
