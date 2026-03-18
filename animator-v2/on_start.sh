@@ -10,7 +10,7 @@ GITHUB_RAW="https://raw.githubusercontent.com/PURRPLEEE/PurpleWork/main/animator
 GITHUB_ZIP_URL="https://github.com/PURRPLEEE/PurpleWork/releases/latest/download/custom_nodes.zip"
 TMP_ZIP="/tmp/custom_nodes.zip"
 TMP_EXTRACT="/tmp/custom_nodes_extracted"
-HF_TOKEN="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"
+HF_TOKEN="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"
  
 exec > >(tee -a "$LOG_FILE") 2>&1
  
@@ -205,3 +205,4 @@ echo "=============================================="
 echo " ✅ ANIMATOR V2 готов! [$(date)]"
 echo " Лог: $LOG_FILE"
 echo "=============================================="
+ 
